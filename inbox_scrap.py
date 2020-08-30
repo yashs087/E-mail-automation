@@ -47,7 +47,7 @@ def job():
     sheet = client.open_by_url(gsheeturl).sheet1
     check = sheet.col_values(2)
     name = sheet.col_values(3)
-    print (name)
+    
     
     
     
@@ -75,7 +75,7 @@ def job():
     date_format = "%d-%b-%Y" # DD-Mon-YYYY 
     since_date = datetime.strptime(datetime.strftime(datetime.now() - timedelta(7) + timedelta(hours=5,minutes=30),'%d-%b-%Y'), date_format) #the dates need to be changed accordingly
     before_date = datetime.strptime((datetime.now()+ timedelta(hours=1,minutes=00)).strftime('%d-%b-%Y'), date_format)
-    print(datetime.now(),since_date,before_date)
+    
     try:
         mail = imaplib.IMAP4_SSL('imap.gmail.com')
         mail.login('email', 'pass')
@@ -90,7 +90,7 @@ def job():
     type, data = mail.search(None,
     '(since "%s")' % (since_date.strftime(date_format)))                            
                                      
-    print(datetime.now(),since_date,before_date)
+
     mail_ids = data[0]
     
     id_list = mail_ids.split() 
@@ -115,20 +115,16 @@ def job():
                     timelap=int(msg["date"].split(" ")[5])
                     hour=int(timelap/100)
                     minutes=int(timelap%100)
-                    print(timelap)
+
                     recieving_time=datetime.strptime(time1,"%a %d %b %Y %H:%M:%S")+ timedelta(hours=5,minutes=30)- timedelta(hours=hour,minutes=minutes)
                     india = pytz.timezone('Asia/Kolkata')
                     datetime_india = datetime.now(india)
                     time0=datetime.strptime(datetime_india.strftime("%d-%b-%Y %H:%M:%S"),"%d-%b-%Y %H:%M:%S")
-                    print(msg["from"])
-                    print("UST time",msg['date'])
-                    print("india time:",time0 )
-                    print("mail recieved at",recieving_time)
-                    print("time diffence",time0-recieving_time)
+
                     if timedelta(days=0, hours=1,minutes=0)<(time0-recieving_time):
                         print("bayond given time frame ie ",time0-recieving_time)
                         flag=True
-                        print(count)
+
                 except:
                     continue
                 ################################ scraping mails from time frame #######################
@@ -143,8 +139,6 @@ def job():
                         links.append(link)
                         text.append(BeautifulSoup(body, "lxml").text)
         count=count+1
-        #print(email_from)
-    #print("email_from")
     print ("completed reading data");
     
     
@@ -168,11 +162,8 @@ def job():
 
     
     def filter(url):
-        #print("in filter")
         head= url.split('?')[0]
-        #print(head,sep,tail)
         splitted=head.split('/')
-        #print(splitted)
         greatest=0
         for splits in splitted:
             count1=splits.count('-')
@@ -180,18 +171,14 @@ def job():
                 greatest = count1
         count2=head.count('_')
         if greatest > 2 or count2 > 2:
-            #print(item)
             return True,head
         else:
             return False,head
         
-    
-    #print("hello baby")
     hlinks=[]
     denied=['images','image','jpg','png','jpeg','img','open','track_click','privacy','terms','gif','unsubscribe','quora','help','support','xhtml','settings','</a><b' ,'policy']
     for ind,i in enumerate(links):
         temp=[]
-        print(emails[ind],"loop1")
         
         
         #to verify the mail
@@ -206,9 +193,6 @@ def job():
         i=set(i)
         for item in i:
             item=item.split('"')[0].split("'")[0]
-            print("loop2, varified mail")
-            #print(item)
-            #[print(ele) in item for ele in denied]
             
             if any(ele in item for ele in denied) == False:
                 try:
@@ -223,13 +207,7 @@ def job():
                 
                 if vailid!=True:
                     continue
-                print("original url",item)
-                print("decoded url",text["decoded_url"])
-                print("vailidated and filtered url",vailid,link)
-                #print(text["scraped"]["cleaned_text"])
-                
-                
-                
+               
                 ########################## generate tags ################################
                 
                 def clean_text(text_val):
@@ -248,24 +226,13 @@ def job():
                 all_tags.drop_duplicates(inplace=True)
                 all_tags.reset_index(drop=True,inplace=True)
                 #all_tags=list(all_tags)
-                #print(all_tags.TagName.values)
-                #print(clean_text(text["scraped"]["cleaned_text"]))
+
                 
                 from flashtext import KeywordProcessor
                 keyword_processor = KeywordProcessor()
                 keyword_processor.add_keywords_from_list(list(all_tags.TagName.values))
                 tags1=keyword_processor.extract_keywords(clean_text(text["scraped"]["cleaned_text"]))
                 
-                '''
-                for i in text['scraped']:
-                    print(i)
-                    if i!="html":
-                        try:
-                            print(text['scraped'][i])
-                        except:
-                            print(text['scraped'][i].encode("utf-8"))
-                            
-                '''
                 
                 ######################## Connecting Database ############################
     
@@ -287,12 +254,9 @@ def job():
                     link="'"+clean_text(link)+"'"
                     domain=link.split(".")
                     #dlist=[".com",".in",".org",".net",".edu",".gov"]
-                    print(link)
-                    print(link.split("/"))
                     for i in link.split("/"):
                         if ".com" in i or ".in" in i or ".org" in i or ".net" in i or ".edu" in i or ".gov" in i:
                             domain=i
-                            print(i)
                     #domain="'"+domain+"'"
                     if len(domain)>0:
                         subject="'"+clean_text(','.join(text["scraped"]['authors']))+" - "+domain+"'"
@@ -302,14 +266,12 @@ def job():
                     tags=text["scraped"]['tags']
                     tags=tags+tags1
                     tags="'"+clean_text(','.join(tags))+"'"
-                    #print(link)
                     query="""INSERT INTO `question_test`(`question`, `subject`, `exam_name`, `url_content`, `description`, `url`) VALUES ({0},{1},{2},{3},{4},{5})""".format(title,subject,"'"+domain+"'",tags,description,link)
-                    #query="""INSERT INTO `scraped_links`(`link`,  `tags`) VALUES ({0},{1})""".format(link,tags)
-                    #print(query)
+
                     
                     
                     mycursor.execute(query)
-                    print("hello")
+                    print("query executed")
                     mydb.commit()
                     mydb.close()
                     
@@ -319,9 +281,9 @@ def job():
 
 
 job()
-'''
+
 schedule.every(59).minutes.do(job)
 
 while True:
     schedule.run_pending()
-    time.sleep(1) '''
+    time.sleep(1) 
